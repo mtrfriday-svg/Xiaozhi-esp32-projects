@@ -55,7 +55,19 @@ bool Assets::Apply(bool refresh_display_theme) {
 }
 
 bool Assets::InitializePartition() {
-    return strategy_ ? strategy_->InitializePartition(this) : false;
+    bool ok = strategy_ ? strategy_->InitializePartition(this) : false;
+
+    if (ok && models_list_ == nullptr) {
+        ESP_LOGI(TAG, "Loading ESP-SR models immediately after assets partition initialization");
+
+        if (!LoadSrmodelsFromIndex(this)) {
+            ESP_LOGE(TAG, "FAILED to load ESP-SR models during partition initialization");
+        } else {
+            ESP_LOGI(TAG, "ESP-SR models loaded successfully during partition initialization");
+        }
+    }
+
+    return ok;
 }
 
 void Assets::UnApplyPartition() {
