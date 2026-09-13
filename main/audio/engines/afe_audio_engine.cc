@@ -63,12 +63,22 @@ bool AfeAudioEngine::Initialize(AudioCodec* codec, int frame_duration_ms,
     frame_samples_ = frame_duration_ms * 16000 / 1000;
     output_buffer_.reserve(frame_samples_);
 
-    if (models_list == nullptr) {
-        models_ = esp_srmodel_init("model");
-        owns_models_ = models_ != nullptr;
-    } else {
-        models_ = models_list;
-    }
+ if (models_list == nullptr) {
+    ESP_LOGE(TAG,
+             "NO ESP-SR MODEL LIST WAS PROVIDED TO AFE. "
+             "WakeNet cannot initialize from the Super Mini assets partition.");
+
+    models_ = nullptr;
+    owns_models_ = false;
+} else {
+    models_ = models_list;
+    ESP_LOGI(TAG, "AFE received ESP-SR model list");
+}
+
+if (models_ == nullptr || models_->num <= 0) {
+    ESP_LOGE(TAG, "ESP-SR model list is empty - WakeNet disabled");
+    return false;
+}    
 
     char* wakenet_model_name = nullptr;
     char* multinet_model_name = nullptr;
